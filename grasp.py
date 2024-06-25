@@ -2,20 +2,41 @@ import random
 from collections import Counter
 
 def distancia(texto1, texto2):
-    """Calcula la distancia de Hamming entre dos textos."""
-    return sum(c1 != c2 for c1, c2 in zip(texto1, texto2))
+    diferencia = 0
+
+    for i in range(len(texto1)):
+        if texto1[i] != texto2[i]:
+            diferencia += 1
+
+    return diferencia
 
 def construir_solucion_greedy_random(textos, m):
     """Construye una solución inicial de manera greedy con algo de aleatoriedad."""
-    solucion = []
+    solucion = []  # Lista para construir la solución
+
     for i in range(m):
         # Contar la frecuencia de cada caracter en la posición i
-        contador = Counter(texto[i] for texto in textos)
-        # Crear una lista de candidatos (caracteres más comunes)
+        contador = Counter()
+        for texto in textos:
+            caracter = texto[i]
+            if caracter in contador:
+                contador[caracter] += 1
+            else:
+                contador[caracter] = 1
+
+        # Encontrar la frecuencia máxima
         max_frecuencia = max(contador.values())
-        candidatos = [caracter for caracter, frecuencia in contador.items() if frecuencia == max_frecuencia]
+
+        # Crear una lista de candidatos (caracteres más comunes)
+        candidatos = []
+        for caracter, frecuencia in contador.items():
+            if frecuencia == max_frecuencia:
+                candidatos.append(caracter)
+
         # Seleccionar aleatoriamente un caracter de los candidatos
-        solucion.append(random.choice(candidatos))
+        elegido = random.choice(candidatos)
+        solucion.append(elegido)
+
     return ''.join(solucion)
 
 def mejora_local(solucion, textos, m):
@@ -37,19 +58,39 @@ def mejora_local(solucion, textos, m):
 def grasp(textos, m, max_iteraciones):
     """Procedimiento principal de GRASP."""
     mejor_solucion_global = None
-    mejor_distancia_global = float('inf')
-    
-    for _ in range(max_iteraciones):
+    mejor_maxima_distancia_global = float('inf')
+    mejor_minima_distancia_global = float('inf')
+    texto_maxima_distancia_global = ""
+    texto_minima_distancia_global = ""
+
+    for iteracion in range(max_iteraciones):
         # Fase constructiva (Greedy + Random)
         solucion_inicial = construir_solucion_greedy_random(textos, m)
         # Fase de mejora local
         solucion_mejorada = mejora_local(solucion_inicial, textos, m)
-        # Evaluar la solución mejorada
-        distancia_solucion = sum(distancia(solucion_mejorada, texto) for texto in textos)
-        if distancia_solucion < mejor_distancia_global:
-            mejor_distancia_global = distancia_solucion
-            mejor_solucion_global = solucion_mejorada
-    
+        
+        # Calcular distancias para la solución mejorada
+        distancias = [distancia(solucion_mejorada, texto) for texto in textos]
+        max_distancia = max(distancias)
+        min_distancia = min(distancias)
+        
+        if max_distancia < mejor_maxima_distancia_global:
+            mejor_maxima_distancia_global = max_distancia
+            texto_maxima_distancia_global = textos[distancias.index(max_distancia)]
+        
+        if min_distancia < mejor_minima_distancia_global:
+            mejor_minima_distancia_global = min_distancia
+            texto_minima_distancia_global = textos[distancias.index(min_distancia)]
+
+        # Imprimir la mayor y menor distancia encontrada en esta iteración
+        print(f"Iteración {iteracion + 1}: Menor distancia encontrada: {mejor_minima_distancia_global}")
+
+    print(f"Mejor solución encontrada: {mejor_solucion_global}")
+    print(f"Mayor distancia encontrada: {mejor_maxima_distancia_global}")
+    print(f"Texto a mayor distancia: {texto_maxima_distancia_global}")
+    print(f"Menor distancia encontrada: {mejor_minima_distancia_global}")
+    print(f"Texto a menor distancia: {texto_minima_distancia_global}")
+
     return mejor_solucion_global
 
 def leer_textos_de_archivo(ruta_archivo):
@@ -58,27 +99,13 @@ def leer_textos_de_archivo(ruta_archivo):
         textos = [linea.strip() for linea in archivo.readlines()]
     return textos
 
-def calcular_distancias(texto, textos):
-    """Calcula las distancias entre el texto y una lista de textos."""
-    distancias = [(distancia(texto, t), t) for t in textos]
-    distancia_maxima, texto_maxima = max(distancias, key=lambda x: x[0])
-    distancia_minima, texto_minima = min(distancias, key=lambda x: x[0])
-    return distancia_maxima, texto_maxima, distancia_minima, texto_minima
-
 # Ejemplo de uso
-ruta_archivo = 'textos_32_100.txt'  # Cambia esto por la ruta a tu archivo de textos
+ruta_archivo = 'texto_mas_parecido_10_300_1.txt'  # Cambia esto por la ruta a tu archivo de textos
 textos = leer_textos_de_archivo(ruta_archivo)
 m = len(textos[0])  # Asumimos que todos los textos tienen la misma longitud
-max_iteraciones = 150
+max_iteraciones = 600
 
 mejor_texto = grasp(textos, m, max_iteraciones)
-distancia_maxima, texto_maxima, distancia_minima, texto_minima = calcular_distancias(mejor_texto, textos)
-
-print(f"El mejor texto encontrado es: {mejor_texto}")
-print(f"La mayor distancia encontrada es: {distancia_maxima}")
-print(f"El texto con mayor distancia es: {texto_maxima}")
-print(f"La menor distancia encontrada es: {distancia_minima}")
-print(f"El texto con menor distancia es: {texto_minima}")
 
 # Pausar la consola
 input("Presiona Enter para salir...")
