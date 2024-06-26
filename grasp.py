@@ -11,8 +11,7 @@ def distancia(texto1, texto2):
     return diferencia
 
 def construir_solucion_greedy_random(textos, m):
-    """Construye una solución inicial de manera greedy con algo de aleatoriedad."""
-    solucion = []  # Lista para construir la solución
+    solucion = [] 
 
     for i in range(m):
         # Contar la frecuencia de cada caracter en la posición i
@@ -40,7 +39,6 @@ def construir_solucion_greedy_random(textos, m):
     return ''.join(solucion)
 
 def mejora_local(solucion, textos, m):
-    """Mejora la solución utilizando búsqueda local."""
     mejor_solucion = solucion
     mejor_distancia = sum(distancia(solucion, texto) for texto in textos)
     
@@ -56,7 +54,7 @@ def mejora_local(solucion, textos, m):
     return mejor_solucion
 
 def grasp(textos, m, max_iteraciones):
-    """Procedimiento principal de GRASP."""
+    
     mejor_solucion_global = None
     mejor_maxima_distancia_global = float('inf')
     mejor_minima_distancia_global = float('inf')
@@ -64,9 +62,9 @@ def grasp(textos, m, max_iteraciones):
     texto_minima_distancia_global = ""
 
     for iteracion in range(max_iteraciones):
-        # Fase constructiva (Greedy + Random)
+        
         solucion_inicial = construir_solucion_greedy_random(textos, m)
-        # Fase de mejora local
+        
         solucion_mejorada = mejora_local(solucion_inicial, textos, m)
         
         # Calcular distancias para la solución mejorada
@@ -81,8 +79,8 @@ def grasp(textos, m, max_iteraciones):
         if min_distancia < mejor_minima_distancia_global:
             mejor_minima_distancia_global = min_distancia
             texto_minima_distancia_global = textos[distancias.index(min_distancia)]
+            mejor_solucion_global = solucion_mejorada
 
-        # Imprimir la mayor y menor distancia encontrada en esta iteración
         print(f"Iteración {iteracion + 1}: Menor distancia encontrada: {mejor_minima_distancia_global}")
 
     print(f"Mejor solución encontrada: {mejor_solucion_global}")
@@ -99,13 +97,10 @@ def leer_textos_de_archivo(ruta_archivo):
         textos = [linea.strip() for linea in archivo.readlines()]
     return textos
 
-# Ejemplo de uso
-ruta_archivo = 'texto_mas_parecido_10_300_1.txt'  # Cambia esto por la ruta a tu archivo de textos
+# Uso de instancia
+ruta_archivo = 'texto_mas_parecido_10_300_1.txt'
 textos = leer_textos_de_archivo(ruta_archivo)
-m = len(textos[0])  # Asumimos que todos los textos tienen la misma longitud
-max_iteraciones = 600
+m = len(textos[0]) 
+max_iteraciones = 100
 
 mejor_texto = grasp(textos, m, max_iteraciones)
-
-# Pausar la consola
-input("Presiona Enter para salir...")

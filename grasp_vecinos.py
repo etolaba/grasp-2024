@@ -2,17 +2,14 @@ import random
 from collections import Counter
 
 def distancia(texto1, texto2):
-    # Función para calcular la distancia entre dos textos
     return sum(1 for a, b in zip(texto1, texto2) if a != b)
 
 def leer_textos_de_archivo(ruta_archivo):
-    # Lee los textos desde un archivo y devuelve una lista de textos
     with open(ruta_archivo, 'r') as archivo:
         textos = [linea.strip() for linea in archivo.readlines()]
     return textos
 
 def construir_solucion_greedy_random(textos, m):
-    # Función para construir una solución inicial de manera greedy con algo de aleatoriedad
     solucion = []
     for i in range(m):
         contador = Counter(texto[i] for texto in textos)
@@ -67,9 +64,10 @@ def mejora_local_con_vecindades(solucion, textos, m, max_iter_vecindad):
     return mejor_solucion, mejor_distancia
 
 def grasp_con_vecindades(textos, m, max_iteraciones, max_iter_vecindad):
-    # Implementación de GRASP con exploración de vecindades en la mejora local
+    
     mejor_solucion_global = None
     mejor_distancia_global = float('inf')
+    mejor_minima_distancia_global = float('inf')
     solucion_con_mayor_distancia = None
     mayor_distancia_encontrada = 0
     
@@ -77,6 +75,11 @@ def grasp_con_vecindades(textos, m, max_iteraciones, max_iter_vecindad):
         solucion_inicial = construir_solucion_greedy_random(textos, m)
         solucion_mejorada, distancia_mejorada = mejora_local_con_vecindades(solucion_inicial, textos, m, max_iter_vecindad)
         
+        # Calcular distancias para la solución mejorada
+        distancias = [distancia(solucion_mejorada, texto) for texto in textos]
+        max_distancia = max(distancias)
+        min_distancia = min(distancias)
+
         if distancia_mejorada < mejor_distancia_global:
             mejor_distancia_global = distancia_mejorada
             mejor_solucion_global = solucion_mejorada
@@ -92,13 +95,12 @@ def grasp_con_vecindades(textos, m, max_iteraciones, max_iter_vecindad):
 # Ejemplo de uso
 if __name__ == "__main__":
     # Definir parámetros del ejemplo
-    ruta_archivo = 'texto_mas_parecido_10_300_1.txt'  # Cambia esto por la ruta a tu archivo de textos
+    ruta_archivo = 'texto_mas_parecido_10_300_1.txt'
     textos = leer_textos_de_archivo(ruta_archivo)
     m = len(textos[0])
-    max_iteraciones = 100
+    max_iteraciones = 10
     max_iter_vecindad = 25
     
-    # Ejecutar el algoritmo GRASP con vecindades
     mejor_solucion, mejor_distancia, solucion_con_mayor_distancia, mayor_distancia_encontrada = grasp_con_vecindades(textos, m, max_iteraciones, max_iter_vecindad)
     
     print(f"\nMejor solución encontrada: {mejor_solucion}")
