@@ -80,7 +80,7 @@ def obtener_alfabeto(textos):
 ruta_archivo = 'texto_mas_parecido_15_500_1.txt'  # Cambia esto por la ruta a tu archivo de textos
 textos = leer_textos_de_archivo(ruta_archivo)
 m = len(textos[0])
-max_iteraciones = 50
+max_iteraciones = 500
 alfabeto = obtener_alfabeto(textos)
 archivo_salida = 'distancias_por_iteracion.txt'
 
@@ -92,3 +92,15 @@ print(f"La mayor distancia encontrada es: {distancia_maxima}")
 print(f"El texto con mayor distancia es: {texto_maxima}")
 print(f"La menor distancia encontrada es: {distancia_minima}")
 print(f"El texto con menor distancia es: {texto_minima}")
+
+# Considerar poner un punto de corte de acuerdo a la proporción de la mejora respecto a la mejor solución encontrada
+# O bien un límite a la cantidad de iteraciones sobre la búsqueda local
+# Documentar todo esto en el documento del algortimo y la entrega
+# Considerar eliminar de la iteración en búsqueda local que tenga en cuenta una letra del alfabeto que no aparece en esa posición
+# Volver a consultar dónde se generan los vecinos explicitamente en la mejora local
+# Reconsiderar la forma en la que se mide la distancia para comparar una solución con la otra
+# Considerar no mirar TOOODO el texto para medir nueva distancia en mejora local, del modo que lo estoy haciendo es batante costoso
+# De igual a distinto, de distinto a distinto, o distinto a igual (?)
+
+# NOTAS CLASE
+# La solución es un string la m longitud de los textos dados
