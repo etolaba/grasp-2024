@@ -77,10 +77,10 @@ def obtener_alfabeto(textos):
     return set(caracter for texto in textos for caracter in texto)
 
 # Ejemplo de uso
-ruta_archivo = 'texto_mas_parecido_15_300_1.txt'  # Cambia esto por la ruta a tu archivo de textos
+ruta_archivo = 'texto_mas_parecido_15_500_1.txt'  # Cambia esto por la ruta a tu archivo de textos
 textos = leer_textos_de_archivo(ruta_archivo)
 m = len(textos[0])
-max_iteraciones = 200
+max_iteraciones = 50
 alfabeto = obtener_alfabeto(textos)
 archivo_salida = 'distancias_por_iteracion.txt'
 
