@@ -8,7 +8,9 @@ def distancia(texto1, texto2):
 
 def construir_solucion_greedy_random(textos, m, alfabeto):
     solucion = []
-    n = math.ceil(len(alfabeto) * 0.3)  # Calculo el 30% del tamaño del alfabeto, redondeado hacia arriba
+    # Calculo el 30% del tamaño del alfabeto, redondeado hacia arriba, esto con el objetivo de no usar todas
+    # las letras en caso de que el alfabeto sea muy extenso
+    n = math.ceil(len(alfabeto) * 0.3)  
     
     for i in range(m):
         contador = Counter(texto[i] for texto in textos)
@@ -65,27 +67,28 @@ def mejora_local(solucion, textos, m, caracteres_por_posicion):
     
     return mejor_solucion
 
-def grasp(textos, m, max_iteraciones, alfabeto, caracteres_por_posicion, archivo_salida):
+def grasp(textos, m, alfabeto, caracteres_por_posicion, archivo_salida):
     mejor_solucion_global = None
     mejor_maxima_distancia_global = float('inf')
     
+    max_iteraciones_prima = calcular_max_iteraciones(len(textos), m)
+
     tiempo_inicio = time.time()
     
+    for i in range(max_iteraciones_prima):
+        solucion_inicial = construir_solucion_greedy_random(textos, m, alfabeto)
+        solucion_mejorada = mejora_local(solucion_inicial, textos, m, caracteres_por_posicion)
+        
+        distancias = [distancia(solucion_mejorada, texto) for texto in textos]
+        maxima_distancia = max(distancias)
+        
+        if maxima_distancia < mejor_maxima_distancia_global:
+            mejor_maxima_distancia_global = maxima_distancia
+            mejor_solucion_global = solucion_mejorada
+            
     with open(archivo_salida, 'w') as archivo:
-        for i in range(max_iteraciones):
-            solucion_inicial = construir_solucion_greedy_random(textos, m, alfabeto)
-            solucion_mejorada = mejora_local(solucion_inicial, textos, m, caracteres_por_posicion)
-            
-            distancias = [distancia(solucion_mejorada, texto) for texto in textos]
-            maxima_distancia = max(distancias)
-            
-            if maxima_distancia < mejor_maxima_distancia_global:
-                mejor_maxima_distancia_global = maxima_distancia
-                mejor_solucion_global = solucion_mejorada
-            
-            archivo.write(f"{mejor_maxima_distancia_global}\n")
-            print(f"Mejor maxima distancia en iteracion numero {i+1}: {mejor_maxima_distancia_global}")
-    
+        archivo.write(f"{mejor_solucion_global}\n")       
+        archivo.write(f"{mejor_maxima_distancia_global}\n")
     tiempo_final = time.time()
     tiempo_ejecucion = tiempo_final - tiempo_inicio
     print(f"Tiempo de ejecucion: {tiempo_ejecucion:.2f} segundos")
@@ -112,16 +115,27 @@ def obtener_caracteres_por_posicion(textos, m):
         caracteres_por_posicion.append(set(texto[i] for texto in textos))
     return caracteres_por_posicion
 
+def calcular_max_iteraciones(n, m):
+    k = 0.0035 # Este es un número que saqué en base a diversas pruebas para las instancias con longitud 
+    # 300, 500 y 700, con n que varía de 10 a 20, considero que el resultado es un número de iteraciones
+    # muy cercano al ideal para esos n y m variables
+    max_iteraciones = int(k * n * m)
+    if max_iteraciones < 1:
+        return 15
+    # Este número es solo por si las instancias de n y m son algo pequeñas, como para las instancias con
+    # alfabeto más extenso
+    else:
+        return math.ceil(max_iteraciones)
+
 # Uso
-ruta_archivo = 'texto_mas_parecido_20_700_1.txt'
+ruta_archivo = 'texto_mas_parecido_15_700_3.txt'
 textos = leer_textos_de_archivo(ruta_archivo)
 m = len(textos[0])
-max_iteraciones = 150
 alfabeto = obtener_alfabeto(textos)
 caracteres_por_posicion = obtener_caracteres_por_posicion(textos, m)
-archivo_salida = 'distancias_por_iteracion.txt'
+archivo_salida = 'mejor_solucion.txt'
 
-mejor_texto = grasp(textos, m, max_iteraciones, alfabeto, caracteres_por_posicion, archivo_salida)
+mejor_texto = grasp(textos, m, alfabeto, caracteres_por_posicion, archivo_salida)
 distancia_maxima, texto_maxima, distancia_minima, texto_minima = calcular_distancias(mejor_texto, textos)
 
 print(f"El mejor texto encontrado es: {mejor_texto}")
