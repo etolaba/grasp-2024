@@ -8,34 +8,64 @@ def distancia(texto1, texto2):
 
 def construir_solucion_greedy_random(textos, m, alfabeto):
     solucion = []
-    n = math.ceil(len(alfabeto) * 0.3)  # Calculamos el 30% del tamaño del alfabeto, redondeado hacia arriba
+    n = math.ceil(len(alfabeto) * 0.3)  # Calculo el 30% del tamaño del alfabeto, redondeado hacia arriba
     
     for i in range(m):
         contador = Counter(texto[i] for texto in textos)
-        # Ordenar los caracteres por frecuencia en orden descendente
+        # Ordeno los caracteres por frecuencia en orden descendente
         caracteres_ordenados = sorted(contador.items(), key=lambda x: x[1], reverse=True)
-        # Seleccionar los n caracteres más frecuentes
+        # Selecciono los n caracteres más frecuentes
         candidatos = [caracter for caracter, _ in caracteres_ordenados[:n]]
-        # Seleccionar aleatoriamente un caracter de los candidatos
+        # Selecciono aleatoriamente un caracter de los candidatos
         solucion.append(random.choice(candidatos))
     
     return ''.join(solucion)
 
-def mejora_local(solucion, textos, m, alfabeto):
+def mejora_local(solucion, textos, m, caracteres_por_posicion):
     mejor_solucion = solucion
-    mejor_distancia = sum(distancia(solucion, texto) for texto in textos)
+    mejor_distancias = [distancia(solucion, texto) for texto in textos]
+    mejor_distancia_maxima = max(mejor_distancias)
+    
+    iteraciones_sin_mejora = 0
+    k = math.ceil(m * 0.3)
     
     for i in range(m):
-        for caracter in alfabeto:
+        # Itero solo sobre los caracteres en esa posición
+        for caracter in caracteres_por_posicion[i]:
             if caracter != mejor_solucion[i]:
+                # Inserto el nuevo caracter distinto en la posición que estoy iterando
                 nueva_solucion = mejor_solucion[:i] + caracter + mejor_solucion[i+1:]
-                nueva_distancia = sum(distancia(nueva_solucion, texto) for texto in textos)
-                if nueva_distancia < mejor_distancia:
-                    mejor_distancia = nueva_distancia
+                nueva_distancias = mejor_distancias[:]
+                nueva_distancia_maxima = -1
+                
+                for idx, texto in enumerate(textos):
+                    # Si la distancia cambia en la posición i, recalculamos la distancia total para ese texto
+                    if mejor_solucion[i] != texto[i] and caracter == texto[i]:
+                        nueva_distancias[idx] -= 1
+                    elif mejor_solucion[i] == texto[i] and caracter != texto[i]:
+                        nueva_distancias[idx] += 1
+                    
+                    # Actualizo la distancia máxima encontrada hasta el momento
+                    dist_nueva = nueva_distancias[idx]
+                    if dist_nueva > nueva_distancia_maxima:
+                        nueva_distancia_maxima = dist_nueva
+                
+                # Verifico si la nueva solución mejora la mejor distancia máxima encontrada
+                if nueva_distancia_maxima < mejor_distancia_maxima:
+                    mejor_distancia_maxima = nueva_distancia_maxima
                     mejor_solucion = nueva_solucion
+                    mejor_distancias = nueva_distancias
+                    iteraciones_sin_mejora = 0
+                else:
+                    iteraciones_sin_mejora += 1
+                
+                # Termino si no se encuentra mejora después de k iteraciones
+                if iteraciones_sin_mejora >= k:
+                    return mejor_solucion
+    
     return mejor_solucion
 
-def grasp(textos, m, max_iteraciones, alfabeto, archivo_salida):
+def grasp(textos, m, max_iteraciones, alfabeto, caracteres_por_posicion, archivo_salida):
     mejor_solucion_global = None
     mejor_maxima_distancia_global = float('inf')
     
@@ -44,7 +74,7 @@ def grasp(textos, m, max_iteraciones, alfabeto, archivo_salida):
     with open(archivo_salida, 'w') as archivo:
         for i in range(max_iteraciones):
             solucion_inicial = construir_solucion_greedy_random(textos, m, alfabeto)
-            solucion_mejorada = mejora_local(solucion_inicial, textos, m, alfabeto)
+            solucion_mejorada = mejora_local(solucion_inicial, textos, m, caracteres_por_posicion)
             
             distancias = [distancia(solucion_mejorada, texto) for texto in textos]
             maxima_distancia = max(distancias)
@@ -76,15 +106,22 @@ def calcular_distancias(texto, textos):
 def obtener_alfabeto(textos):
     return set(caracter for texto in textos for caracter in texto)
 
-# Ejemplo de uso
-ruta_archivo = 'texto_mas_parecido_15_500_1.txt'  # Cambia esto por la ruta a tu archivo de textos
+def obtener_caracteres_por_posicion(textos, m):
+    caracteres_por_posicion = []
+    for i in range(m):
+        caracteres_por_posicion.append(set(texto[i] for texto in textos))
+    return caracteres_por_posicion
+
+# Uso
+ruta_archivo = 'texto_mas_parecido_10_300_1.txt'
 textos = leer_textos_de_archivo(ruta_archivo)
 m = len(textos[0])
 max_iteraciones = 500
 alfabeto = obtener_alfabeto(textos)
+caracteres_por_posicion = obtener_caracteres_por_posicion(textos, m)
 archivo_salida = 'distancias_por_iteracion.txt'
 
-mejor_texto = grasp(textos, m, max_iteraciones, alfabeto, archivo_salida)
+mejor_texto = grasp(textos, m, max_iteraciones, alfabeto, caracteres_por_posicion, archivo_salida)
 distancia_maxima, texto_maxima, distancia_minima, texto_minima = calcular_distancias(mejor_texto, textos)
 
 print(f"El mejor texto encontrado es: {mejor_texto}")
@@ -92,15 +129,3 @@ print(f"La mayor distancia encontrada es: {distancia_maxima}")
 print(f"El texto con mayor distancia es: {texto_maxima}")
 print(f"La menor distancia encontrada es: {distancia_minima}")
 print(f"El texto con menor distancia es: {texto_minima}")
-
-# Considerar poner un punto de corte de acuerdo a la proporción de la mejora respecto a la mejor solución encontrada
-# O bien un límite a la cantidad de iteraciones sobre la búsqueda local
-# Documentar todo esto en el documento del algortimo y la entrega
-# Considerar eliminar de la iteración en búsqueda local que tenga en cuenta una letra del alfabeto que no aparece en esa posición
-# Volver a consultar dónde se generan los vecinos explicitamente en la mejora local
-# Reconsiderar la forma en la que se mide la distancia para comparar una solución con la otra
-# Considerar no mirar TOOODO el texto para medir nueva distancia en mejora local, del modo que lo estoy haciendo es batante costoso
-# De igual a distinto, de distinto a distinto, o distinto a igual (?)
-
-# NOTAS CLASE
-# La solución es un string la m longitud de los textos dados
