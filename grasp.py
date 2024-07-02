@@ -113,10 +113,10 @@ def obtener_caracteres_por_posicion(textos, m):
     return caracteres_por_posicion
 
 # Uso
-ruta_archivo = 'texto_mas_parecido_10_300_1.txt'
+ruta_archivo = 'texto_mas_parecido_20_700_1.txt'
 textos = leer_textos_de_archivo(ruta_archivo)
 m = len(textos[0])
-max_iteraciones = 500
+max_iteraciones = 150
 alfabeto = obtener_alfabeto(textos)
 caracteres_por_posicion = obtener_caracteres_por_posicion(textos, m)
 archivo_salida = 'distancias_por_iteracion.txt'
